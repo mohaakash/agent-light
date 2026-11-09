@@ -1,0 +1,23 @@
+[package]
+name = "agent-light"
+version = "0.1.0"
+description = "A local virtual traffic light for AI coding-agent status"
+authors = ["AgentLight"]
+license = "MIT"
+edition = "2021"
+
+[lib]
+name = "agent_light_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+chrono = { version = "0.4", default-features = false, features = ["clock", "serde", "std"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serialport = { version = "4.10.1", default-features = false }
+tauri = { version = "2", features = ["tray-icon"] }
+tauri-plugin-autostart = "2.3.0"
+uuid = { version = "1", features = ["v4"] }

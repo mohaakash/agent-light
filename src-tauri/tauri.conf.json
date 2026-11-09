@@ -1,0 +1,48 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "AgentLight",
+  "version": "0.1.0",
+  "identifier": "com.agentlight.app",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "AgentLight",
+        "width": 1120,
+        "height": 900,
+        "minWidth": 820,
+        "minHeight": 680,
+        "transparent": true,
+        "center": true
+      },
+        { "label": "traffic-light-codex", "title": "AgentLight · Codex", "url": "index.html?window=traffic-light&agent=codex", "width": 112, "height": 272, "minWidth": 90, "minHeight": 218, "decorations": false, "transparent": true, "alwaysOnTop": true, "skipTaskbar": true, "resizable": false, "visible": false, "focusable": true, "closable": false, "shadow": false },
+        { "label": "traffic-light-claude", "title": "AgentLight · Claude", "url": "index.html?window=traffic-light&agent=claude", "width": 112, "height": 272, "minWidth": 90, "minHeight": 218, "decorations": false, "transparent": true, "alwaysOnTop": true, "skipTaskbar": true, "resizable": false, "visible": false, "focusable": true, "closable": false, "shadow": false },
+        { "label": "traffic-light-pi", "title": "AgentLight · Pi", "url": "index.html?window=traffic-light&agent=pi", "width": 112, "height": 272, "minWidth": 90, "minHeight": 218, "decorations": false, "transparent": true, "alwaysOnTop": true, "skipTaskbar": true, "resizable": false, "visible": false, "focusable": true, "closable": false, "shadow": false }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["msi", "nsis"],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "publisher": "AgentLight",
+    "category": "DeveloperTool",
+    "shortDescription": "A local status light for AI coding agents",
+    "longDescription": "AgentLight displays coding-agent activity in a movable desktop traffic light and optional ESP8266 hardware. Status stays local, and the virtual indicator works without hardware.",
+    "copyright": "Copyright © 2026 AgentLight"
+  }
+}

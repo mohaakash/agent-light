@@ -1,0 +1,48 @@
+# Dependencies
+/node_modules/
+
+# Frontend build output and caches
+/dist/
+/.vite/
+/.cache/
+/.eslintcache
+/coverage/
+/.turbo/
+*.tsbuildinfo
+
+# Tauri and Rust build output
+/src-tauri/target/
+/src-tauri/gen/
+
+# PlatformIO generated files
+/firmware/esp8266/.pio/
+/firmware/esp8266/.cache/
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Logs and crash dumps
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+*.stackdump
+*.dmp
+*.core
+
+# Temporary and editor files
+*.tmp
+*.temp
+*.swp
+*.swo
+*.orig
+*~
+.idea/
+
+# Operating system files
+.DS_Store
+Thumbs.db
+Desktop.ini
