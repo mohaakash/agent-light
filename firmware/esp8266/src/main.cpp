@@ -32,7 +32,7 @@ void setStatus(const char* status) {
 
 void processLine(const char* line) {
   if (std::strcmp(line, "HELLO") == 0) {
-    Serial.println("AGENTLIGHT:ESP8266:1");
+    Serial.println("AGENTLIGHT:SERIAL:1");
     lastValidCommandAt = millis();
     return;
   }
@@ -89,7 +89,7 @@ void setup() {
   allOff();
   Serial.begin(115200);
   lastValidCommandAt = millis();
-  Serial.println("AGENTLIGHT:ESP8266:1");
+  Serial.println("AGENTLIGHT:SERIAL:1");
 }
 
 void loop() {

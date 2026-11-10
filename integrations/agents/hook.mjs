@@ -46,9 +46,17 @@ function bridgePath() {
   return join(configDirectory(), "codex-bridge.json");
 }
 
+function eventForHook(agentId, eventName, input) {
+  if (agentId === "antigravity" && eventName === "PreToolUse") {
+    const toolName = input.toolCall?.name;
+    if (toolName === "ask_permission" || toolName === "ask_question") return "permission_required";
+  }
+  return EVENT_MAP[agentId]?.[eventName];
+}
+
 function normalizeHookInput(agentId, input, fallbackEvent) {
   const eventName = firstString(input.hook_event_name, input.event, input.event_name, fallbackEvent);
-  const event = EVENT_MAP[agentId]?.[eventName];
+  const event = eventForHook(agentId, eventName, input);
   if (!event) return null;
   const sessionId = firstString(input.session_id, input.sessionId, input.conversation_id, input.conversationId, input.execution_id, "default");
   const cwd = firstString(input.cwd, input.workspace_root, input.project_dir, input.directory, input.workspace_path, Array.isArray(input.workspacePaths) ? input.workspacePaths[0] : "");

@@ -12,7 +12,8 @@ const SERIAL_TIMEOUT: Duration = Duration::from_millis(300);
 const HANDSHAKE_ATTEMPTS: usize = 10;
 const HANDSHAKE_RETRY_DELAY: Duration = Duration::from_millis(200);
 const MAX_RESPONSE_LENGTH: usize = 96;
-const DEVICE_ID: &str = "AGENTLIGHT:ESP8266:1";
+const SERIAL_DEVICE_ID: &str = "AGENTLIGHT:SERIAL:1";
+const LEGACY_ESP8266_DEVICE_ID: &str = "AGENTLIGHT:ESP8266:1";
 
 #[derive(Clone, Debug, Serialize, PartialEq, Eq)]
 pub struct SerialPortOption {
@@ -109,21 +110,22 @@ impl HardwareOutput {
                 message
             })?;
 
-        let mut identified = false;
+        let mut device_id = None;
         for _ in 0..HANDSHAKE_ATTEMPTS {
             match transact(&mut *port, "HELLO") {
-                Ok(response) if response == DEVICE_ID => {
-                    identified = true;
+                Ok(response) if is_supported_device_id(&response) => {
+                    device_id = Some(response);
                     break;
                 }
                 _ => thread::sleep(HANDSHAKE_RETRY_DELAY),
             }
         }
-        if !identified {
-            let message = "connected serial device did not identify as AgentLight ESP8266";
+        let Some(device_id) = device_id else {
+            let message =
+                "connected serial device did not identify as an AgentLight USB serial device";
             connection.status.error = Some(message.to_string());
             return Err(message.to_string());
-        }
+        };
 
         let status_response =
             transact(&mut *port, &format!("STATUS:{}", state.as_protocol_name()))?;
@@ -137,7 +139,7 @@ impl HardwareOutput {
         connection.status = HardwareStatus {
             connected: true,
             port_name: Some(port_name.to_string()),
-            device_id: Some(DEVICE_ID.to_string()),
+            device_id: Some(device_id),
             error: None,
         };
         connection.port = Some(port);
@@ -206,6 +208,10 @@ impl HardwareOutput {
     }
 }
 
+fn is_supported_device_id(response: &str) -> bool {
+    response == SERIAL_DEVICE_ID || response == LEGACY_ESP8266_DEVICE_ID
+}
+
 fn disconnect_with_error(connection: &mut Connection, error: String) -> HardwareStatus {
     connection.port = None;
     connection.status = HardwareStatus {
@@ -262,7 +268,7 @@ impl DisplayState {
 
 #[cfg(test)]
 mod tests {
-    use super::{read_line, DisplayState};
+    use super::{is_supported_device_id, read_line, DisplayState};
     use std::io::Cursor;
 
     #[test]
@@ -283,5 +289,12 @@ mod tests {
         assert!(read_line(&mut too_long)
             .unwrap_err()
             .contains("maximum length"));
+    }
+
+    #[test]
+    fn accepts_generic_and_legacy_agentlight_device_ids() {
+        assert!(is_supported_device_id("AGENTLIGHT:SERIAL:1"));
+        assert!(is_supported_device_id("AGENTLIGHT:ESP8266:1"));
+        assert!(!is_supported_device_id("AGENTLIGHT:ARDUINO:1"));
     }
 }

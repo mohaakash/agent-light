@@ -1,8 +1,8 @@
 # Hardware and Firmware Specification
 
-## 1. MVP hardware
+## 1. Supported USB serial hardware
 
-- NodeMCU ESP8266 development board.
+- A compatible USB-serial microcontroller: ESP8266, ESP32, Arduino Uno/Nano, or Raspberry Pi Pico.
 - One red LED.
 - One yellow LED.
 - One green LED.
@@ -13,21 +13,22 @@
 
 The USB connection supplies board power and serial communication. Do not assume every USB cable carries data.
 
-## 2. Suggested pin mapping
+## 2. Suggested pin mappings
 
-| LED | NodeMCU label | ESP8266 GPIO |
-|---|---|---|
-| Red | D1 | GPIO5 |
-| Yellow | D2 | GPIO4 |
-| Green | D5 | GPIO14 |
+| Board | Red | Yellow | Green |
+|---|---:|---:|---:|
+| NodeMCU ESP8266 | D1 / GPIO5 | D2 / GPIO4 | D5 / GPIO14 |
+| ESP32 DevKit V1 | GPIO25 | GPIO26 | GPIO27 |
+| Arduino Uno/Nano | D5 | D6 | D7 |
+| Raspberry Pi Pico | GP6 | GP7 | GP8 |
 
 Suggested wiring:
 - GPIO pin -> resistor -> LED anode (long leg).
 - LED cathode (short leg) -> GND.
-- All grounds share NodeMCU GND.
+- All grounds share the board GND pin.
 - Each LED must have its own current-limiting resistor.
 
-Verify the exact board pinout before wiring. NodeMCU clones and board layouts can vary. Do not connect an LED directly without a resistor.
+Verify the exact board pinout before wiring. Board layouts can vary. Do not connect an LED directly without a resistor.
 
 ## 3. Firmware responsibilities
 
@@ -57,13 +58,13 @@ PING
 Suggested responses:
 
 ```text
-AGENTLIGHT:ESP8266:1
+AGENTLIGHT:SERIAL:1
 ACK:STATUS:WORKING
 PONG
 ERR:UNKNOWN_COMMAND
 ```
 
-The firmware sends `AGENTLIGHT:ESP8266:1` after boot and in response to `HELLO`. The desktop retries the handshake because opening a USB serial port may reset the board. Every valid command refreshes the firmware watchdog. The desktop sends `PING` every five seconds while connected; firmware turns all LEDs off after 15 seconds without a valid command.
+The firmware sends `AGENTLIGHT:SERIAL:1` after boot and in response to `HELLO`. The desktop also accepts the legacy `AGENTLIGHT:ESP8266:1` identifier. The desktop retries the handshake because opening a USB serial port may reset the board. Every valid command refreshes the firmware watchdog. The desktop sends `PING` every five seconds while connected; firmware turns all LEDs off after 15 seconds without a valid command.
 
 The protocol should be case-sensitive and documented. Use a bounded input buffer and reject overlong lines.
 
@@ -100,13 +101,17 @@ The virtual UI may distinguish WAITING and ERROR with labels or animation; the s
 
 ## 8. Firmware build and upload
 
-The PlatformIO project is in `firmware/esp8266`:
+PlatformIO projects are supplied for ESP8266, ESP32, and Raspberry Pi Pico:
 
 ```sh
 pio run -d firmware/esp8266
 pio run -d firmware/esp8266 -t upload
+pio run -d firmware/esp32
+pio run -d firmware/pico
 ```
 
-Select the detected serial port in AgentLight after the board restarts. The dashboard's Scan and Connect controls identify the firmware before enabling LED tests. A serial disconnect marks the hardware output disconnected; virtual status continues independently. Reconnect is user initiated.
+For Arduino Uno/Nano, open `firmware/arduino/agentlight_traffic_light.ino` in the Arduino IDE, select the matching board and port, then upload. All examples use the same USB serial protocol and can be adapted to another Arduino-compatible board by changing the three pin numbers.
 
-The desktop serial implementation uses the cross-platform `serialport` crate. This repository has compile-tested the Rust host code, but firmware flashing, LED wiring, timeout behavior and reconnection still require a NodeMCU and the specified LEDs/resistors.
+Select the detected serial port in AgentLight after the board restarts. The dashboard's Scan and Connect controls identify compatible AgentLight firmware before enabling LED tests. A serial disconnect marks the hardware output disconnected; virtual status continues independently. Reconnect is user initiated.
+
+The desktop serial implementation uses the cross-platform `serialport` crate. This repository has compile-tested the Rust host code, but physical flashing, LED wiring, timeout behavior and reconnection still need validation on each listed board.

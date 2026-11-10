@@ -405,7 +405,7 @@ export function App() {
           <div className="panel-heading">
             <div>
               <p className="eyebrow">OPTIONAL HARDWARE</p>
-              <h2>ESP8266 traffic light</h2>
+              <h2>USB serial traffic light</h2>
             </div>
             <span className={hardwareStatus.connected ? "connection-dot online" : "connection-dot"} />
           </div>
@@ -413,8 +413,8 @@ export function App() {
             {hardwareStatus.connected
               ? `Connected on ${hardwareStatus.port_name}. The LEDs mirror the resolved status.`
               : hardwareStatus.error
-                ? `${hardwareStatus.error}. Connect a NodeMCU over USB to mirror the virtual status.`
-                : "Connect a NodeMCU over USB to mirror the virtual status with three LEDs."}
+                ? `${hardwareStatus.error}. Connect a compatible microcontroller over USB to mirror the virtual status.`
+                : "Connect a compatible microcontroller over USB to mirror the virtual status with three LEDs."}
           </p>
           <div className="hardware-connect-row">
             <select
@@ -449,7 +449,7 @@ export function App() {
             <button className="state-button" disabled={!hardwareStatus.connected} onClick={() => void runLedTest("IDLE")} type="button">All off</button>
           </div>
         </article>
-        <article className="panel hardware-note"><p className="eyebrow">DEVICE STATUS</p><h3>ESP8266 traffic light</h3><p className="panel-copy">{hardwareStatus.connected ? `Connected on ${hardwareStatus.port_name}. It mirrors the resolved agent status.` : "Connect a NodeMCU over USB to mirror the virtual light. The virtual output continues to work without hardware."}</p><div className="hardware-state-pill"><span className={`session-state state-${snapshot.state.toLowerCase()}`} />Current output: {meta.label}</div></article>
+        <article className="panel hardware-note"><p className="eyebrow">DEVICE STATUS</p><h3>USB serial traffic light</h3><p className="panel-copy">{hardwareStatus.connected ? `Connected on ${hardwareStatus.port_name}. It mirrors the resolved agent status.` : "Connect a compatible microcontroller over USB to mirror the virtual light. The virtual output continues to work without hardware."}</p><div className="hardware-state-pill"><span className={`session-state state-${snapshot.state.toLowerCase()}`} />Current output: {meta.label}</div></article>
         </section>
       </> : null}
           </div>

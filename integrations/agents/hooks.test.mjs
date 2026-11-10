@@ -21,6 +21,13 @@ test("normalizes Cursor and Gemini events into AgentLight events", () => {
   assert.equal(antigravity.project, "demo");
 });
 
+test("maps Antigravity permission and question tools to attention", () => {
+  for (const toolName of ["ask_permission", "ask_question"]) {
+    const event = normalizeHookInputForTest("antigravity", { conversationId: "anti-1", toolCall: { name: toolName } }, "PreToolUse");
+    assert.equal(event.event, "permission_required");
+  }
+});
+
 test("normalizes unknown events to null", () => {
   assert.equal(normalizeHookInputForTest("cursor", { session_id: "cursor-1" }, "unknown"), null);
 });

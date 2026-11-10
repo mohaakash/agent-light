@@ -47,7 +47,7 @@
     "publisher": "AgentLight",
     "category": "DeveloperTool",
     "shortDescription": "A local status light for AI coding agents",
-    "longDescription": "AgentLight displays coding-agent activity in a movable desktop traffic light and optional ESP8266 hardware. Status stays local, and the virtual indicator works without hardware.",
+    "longDescription": "AgentLight displays coding-agent activity in a movable desktop traffic light and optional USB-serial microcontroller hardware. Status stays local, and the virtual indicator works without hardware.",
     "copyright": "Copyright © 2026 AgentLight"
   }
 }
