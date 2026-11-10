@@ -33,7 +33,7 @@ test("normalizes unknown events to null", () => {
 });
 
 test("uses an absolute Node executable so desktop-launched hooks do not depend on PATH", () => {
-  assert.match(getAgentHookCommand("antigravity", process.cwd(), "PreInvocation"), /^"\/.+node" "/);
+  assert.match(getAgentHookCommand("antigravity", process.cwd(), "PreInvocation"), /^"(?:[A-Za-z]:)?\/.+\/node(?:\.exe)?" "/);
 });
 
 test("installs Antigravity's named global hook configuration", () => {
