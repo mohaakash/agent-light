@@ -1,79 +1,66 @@
-# AgentLight
+<div align="center">
 
-AgentLight is a local desktop companion that turns AI coding-agent activity into physical and virtual status indicators.
+# 🚦 AgentLight
+
+### See what your coding agents are doing.
+
+**A small desktop traffic light for AI agent activity — virtual or physical, local by design.**
 
 ![AgentLight demo](docs/assets/agentlight-demo-optimized.gif)
 
-## Features
+<p>
+  <img alt="Tauri 2" src="https://img.shields.io/badge/Tauri-2-24C8DB?style=flat-square&logo=tauri&logoColor=white">
+  <img alt="React" src="https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=black">
+  <img alt="Rust" src="https://img.shields.io/badge/Rust-core-DEA584?style=flat-square&logo=rust&logoColor=black">
+  <img alt="MIT License" src="https://img.shields.io/badge/license-MIT-8B7CF6?style=flat-square">
+</p>
 
-- A draggable, always-on-top virtual traffic-light widget for each configured agent.
-- A Rust session core that aggregates multiple agent sessions deterministically.
-- A token-protected loopback API for lifecycle events.
-- Agent adapters for OpenAI Codex, Claude Code, Cursor, Gemini CLI, Windsurf, GitHub Copilot CLI, and Antigravity.
-- Optional USB-serial hardware output with firmware projects for ESP8266, ESP32, Raspberry Pi Pico, and Arduino.
-- Hardware-independent operation: the virtual indicator works without a connected device.
+</div>
 
-AgentLight sends status metadata only. It does not read prompts, source code, terminal output, or tool arguments, and it never approves agent permissions.
+AgentLight turns agent lifecycle events into a glanceable light: **yellow** while working, **red** when attention is needed, **green** when a task completes. Give every agent its own floating widget, or connect optional USB hardware.
 
-## Development setup
+## What it does
 
-Prerequisites:
+- Tracks sessions across Codex, Claude Code, Cursor, Gemini CLI, Windsurf, GitHub Copilot CLI, and Antigravity.
+- Shows a draggable, always-on-top widget for each agent.
+- Can mirror status to ESP8266, ESP32, Raspberry Pi Pico, or Arduino hardware.
+- Keeps events on your machine and sends status metadata only.
 
-- Node.js and npm.
-- Rust stable and the Tauri prerequisites for your operating system.
+## Get started
 
-From the repository root:
+Requires Node.js, npm, Rust, and the [Tauri prerequisites](https://tauri.app/start/prerequisites/).
 
 ```sh
 npm install
 npm run tauri dev
 ```
 
-Useful checks and builds:
+## Connect an agent
+
+Start AgentLight once, then install the matching hook from the project folder:
+
+```sh
+node integrations/codex/install.mjs
+```
+
+For Claude Code use `integrations/claude/install.mjs`. For Cursor, Gemini CLI, Windsurf, Copilot CLI, or Antigravity, use `node integrations/agents/install.mjs <agent>`.
+
+## Build and checks
 
 ```sh
 npm run lint
 npm run test:integrations
-npm run build
 npm run tauri build
 ```
 
-The current CI and packaging target is Windows. `npm run tauri build` produces the configured MSI and NSIS installers on Windows.
+Windows MSI and NSIS installers are configured. Other platforms and physical hardware still need hands-on validation.
 
-## Agent integrations
+## Project docs
 
-Start AgentLight once before installing an integration so it can create the local API bridge configuration.
+Start with the [documentation guide](docs/README.md), or jump to the [roadmap](docs/ROADMAP.md), [agent integrations](docs/AGENT_INTEGRATIONS.md), and [hardware guide](docs/HARDWARE_FIRMWARE.md).
 
-Codex:
+<div align="center">
 
-```powershell
-node integrations/codex/install.mjs
-```
+*Local status. Clear signals. Fewer missed moments.*
 
-Claude Code:
-
-```powershell
-node integrations/claude/install.mjs
-```
-
-Cursor, Gemini CLI, Windsurf, GitHub Copilot CLI, or Antigravity:
-
-```powershell
-node integrations/agents/install.mjs <agent>
-```
-
-Replace `<agent>` with `cursor`, `gemini`, `windsurf`, `copilot`, or `antigravity`. Each installer preserves the agent's existing configuration and has a matching uninstall command.
-
-## Documentation
-
-The complete product and implementation documentation is in [`docs/README.md`](docs/README.md). Important references include:
-
-- [`docs/ROADMAP.md`](docs/ROADMAP.md) — implementation status and remaining work.
-- [`docs/AGENT_INTEGRATIONS.md`](docs/AGENT_INTEGRATIONS.md) — adapter strategy and lifecycle mappings.
-- [`docs/LOCAL_API.md`](docs/LOCAL_API.md) — local event API and security model.
-- [`docs/HARDWARE_FIRMWARE.md`](docs/HARDWARE_FIRMWARE.md) — wiring, firmware, and serial protocol.
-- [`docs/CODEX_GUIDE.md`](docs/CODEX_GUIDE.md) — repository guidance for coding agents.
-
-## Current validation status
-
-The Windows desktop build, session core, local API tests, adapter installer tests, and firmware projects are in the repository. Live smoke tests with installed agents, physical LED verification, cross-platform packaging, and mixed-DPI multi-monitor behavior still need validation.
+</div>
