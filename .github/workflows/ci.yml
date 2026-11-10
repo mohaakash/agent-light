@@ -70,12 +70,12 @@ jobs:
             import { readFileSync, writeFileSync } from "node:fs";
             const version = process.env.VERSION;
             const cargoPath = "src-tauri/Cargo.toml";
-            const cargo = readFileSync(cargoPath, "utf8").replace(/^version = "0\\.1\\.0"$/m, `version = "${version}"`);
+            const cargo = readFileSync(cargoPath, "utf8").replace(/^version = "[^"]+"/m, `version = "${version}"`);
             writeFileSync(cargoPath, cargo);
             const tauriPath = "src-tauri/tauri.conf.json";
             const tauri = JSON.parse(readFileSync(tauriPath, "utf8"));
             tauri.version = version;
-            writeFileSync(tauriPath, `${JSON.stringify(tauri, null, 2)}\\n`);
+            writeFileSync(tauriPath, JSON.stringify(tauri, null, 2));
           '
       - name: Build application bundles
         run: npm run tauri build -- --bundles ${{ matrix.bundles }}
