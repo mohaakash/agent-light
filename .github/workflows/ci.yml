@@ -66,8 +66,17 @@ jobs:
         run: |
           VERSION="0.1.${GITHUB_RUN_NUMBER}"
           npm version "$VERSION" --no-git-tag-version --allow-same-version
-          sed -i "s/^version = \"0.1.0\"/version = \"$VERSION\"/" src-tauri/Cargo.toml
-          sed -i "s/\"version\": \"0.1.0\"/\"version\": \"$VERSION\"/" src-tauri/tauri.conf.json
+          VERSION="$VERSION" node --input-type=module -e '
+            import { readFileSync, writeFileSync } from "node:fs";
+            const version = process.env.VERSION;
+            const cargoPath = "src-tauri/Cargo.toml";
+            const cargo = readFileSync(cargoPath, "utf8").replace(/^version = "0\\.1\\.0"$/m, `version = "${version}"`);
+            writeFileSync(cargoPath, cargo);
+            const tauriPath = "src-tauri/tauri.conf.json";
+            const tauri = JSON.parse(readFileSync(tauriPath, "utf8"));
+            tauri.version = version;
+            writeFileSync(tauriPath, `${JSON.stringify(tauri, null, 2)}\\n`);
+          '
       - name: Build application bundles
         run: npm run tauri build -- --bundles ${{ matrix.bundles }}
       - uses: actions/upload-artifact@v4
@@ -84,6 +93,9 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/download-artifact@v4
         with:
           path: release-assets
@@ -97,7 +109,8 @@ jobs:
         run: |
           git tag "v$VERSION" "$COMMIT"
           git push origin "v$VERSION"
-          gh release create "v$VERSION" release-assets/**/** \
+          gh release create "v$VERSION" \
             --repo "$REPOSITORY" \
             --title "AgentLight v$VERSION" \
             --generate-notes
+          find release-assets -type f -print0 | xargs -0 -r gh release upload "v$VERSION" --repo "$REPOSITORY"
