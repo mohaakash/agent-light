@@ -4,7 +4,7 @@
 
 AgentLight is a cross-platform desktop application that makes the activity of AI coding agents visible through:
 - A draggable, always-on-top virtual traffic light.
-- An optional physical three-LED traffic light powered by an ESP8266 NodeMCU.
+- Optional physical three-LED traffic lights using the shared USB-serial protocol.
 - A unified event and session model for supported coding agents.
 
 The desktop application must remain useful without the physical hardware.
@@ -19,7 +19,7 @@ The desktop application must remain useful without the physical hardware.
 | `DESIGN.md` | UI/UX principles, windows and interaction behavior |
 | `STATUS_MODEL.md` | Canonical statuses, event semantics and aggregation |
 | `LOCAL_API.md` | Local integration API and security requirements |
-| `HARDWARE_FIRMWARE.md` | ESP8266 wiring, firmware behavior and serial protocol |
+| `HARDWARE_FIRMWARE.md` | Hardware wiring, firmware behavior and serial protocol |
 | `AGENT_INTEGRATIONS.md` | Adapter strategy and per-agent integration requirements |
 | `PROJECT_STRUCTURE.md` | Proposed repository layout and module ownership |
 | `ROADMAP.md` | Phased MVP and release plan with acceptance criteria |
@@ -52,8 +52,8 @@ To create a frontend production build, run `npm run build`. On Windows, create M
 
 ## Current project status
 
-The repository contains the virtual traffic-light prototype, Codex and Claude Code lifecycle-hook adapters, a Rust session resolver, a token-protected loopback event API, and an ESP8266 firmware/serial output path. The session core tracks independent `(agent, session_id)` sessions, resolves aggregate priority, ignores duplicate and out-of-order events, expires stale work, and shows completion for five seconds. API logs omit tokens and event bodies. The widget's always-on-top preference and screen position are saved in the application config directory and restored on launch. If a saved position is no longer on a connected monitor, it is moved back onto an available display.
+The repository contains the virtual traffic-light application, lifecycle-hook adapters for Codex, Claude Code, Cursor, Gemini CLI, Windsurf, GitHub Copilot CLI, and Antigravity, a Rust session resolver, a token-protected loopback event API, and USB-serial firmware projects. The session core tracks independent `(agent, session_id)` sessions, resolves aggregate priority, ignores duplicate and out-of-order events, expires stale work, and shows completion for five seconds. API logs omit tokens and event bodies. The widget's always-on-top preference, appearance, and screen position are saved in the application config directory and restored on launch. If a saved position is no longer on a connected monitor, it is moved back onto an available display.
 
-The Windows app has MSI and NSIS installers, generated platform icons, a live session dashboard, persisted widget appearance, tray controls, optional launch-at-login, and CI checks that publish the installers as workflow artifacts. macOS and Linux launch behavior, multi-monitor edge cases, live Codex/Claude hook smoke tests, and physical ESP8266/LED behavior still need validation. Additional agent integrations and compact/expanded widget layouts remain future work.
+The Windows app has MSI and NSIS installers, generated platform icons, a live session dashboard, per-agent widget controls, persisted widget appearance, tray controls, optional launch-at-login, and CI checks that publish the installers as workflow artifacts. macOS and Linux launch behavior, multi-monitor edge cases, live agent hook smoke tests, and physical LED behavior still need validation. OpenCode and Pi adapters, plus compact and expanded widget layout variants, remain future work.
 
 Start with `CODEX_GUIDE.md`, then read the product, architecture, status model, and roadmap documents before coding.

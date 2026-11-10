@@ -6,15 +6,24 @@ Each coding agent has its own event model and extension mechanism. AgentLight mu
 
 Do not assume that all agents expose identical events or that their APIs remain stable.
 
-## 2. Initial integration candidates
+## 2. Integration status
+
+Implemented adapters:
 
 - OpenAI Codex
 - Claude Code
-- OpenCode
-- Pi coding agent
+- Cursor
+- Gemini CLI
+- Windsurf
+- GitHub Copilot CLI
 - Google Antigravity
 
-These are targets, not a claim that integrations are already implemented or that every product exposes all required lifecycle signals.
+Planned adapters:
+
+- OpenCode
+- Pi coding agent
+
+The implemented adapters use documented lifecycle hooks where available and send normalized status metadata to the authenticated local API. Support means that AgentLight can install and remove the adapter and process its mapped events; live smoke testing against each installed agent remains outstanding.
 
 Before implementing an adapter:
 1. Consult the current official documentation for the exact agent and version.
@@ -80,9 +89,9 @@ Every adapter should have a README containing:
 - Troubleshooting.
 - Automated/manual test procedure.
 
-## 7. MVP recommendation
+## 7. Implementation sequence
 
-Implement one integration end-to-end first. Choose the first adapter based on the developer's actual installed agent and the quality of its documented lifecycle events. Do not implement all integrations before validating the core event pipeline.
+Codex was implemented end-to-end first to validate the event pipeline. Claude Code followed with the same bridge contract. Cursor, Gemini CLI, Windsurf, GitHub Copilot CLI, and Antigravity now use the shared adapter installer and hook bridge. New adapters should still be added one at a time after their lifecycle interfaces and installed versions are verified.
 
 ## 8. Codex integration — initial implementation
 
@@ -109,3 +118,17 @@ The hook exits successfully when AgentLight is stopped, unavailable or not confi
 The second adapter uses Claude Code's documented command hooks and the same authenticated local event API. See [`integrations/claude/README.md`](../integrations/claude/README.md) for setup, uninstall, privacy, and lifecycle mapping. Claude's `StopFailure` hook can report an error signal without transmitting error details.
 
 The hook installation and live event delivery have not yet been smoke-tested inside a running Claude Code session.
+
+## 10. Shared adapters
+
+Cursor, Gemini CLI, Windsurf, GitHub Copilot CLI, and Antigravity use the shared implementation in `integrations/agents/`. Install one from the repository root with:
+
+```sh
+node integrations/agents/install.mjs cursor
+node integrations/agents/install.mjs gemini
+node integrations/agents/install.mjs windsurf
+node integrations/agents/install.mjs copilot
+node integrations/agents/install.mjs antigravity
+```
+
+The shared installer preserves existing configuration, creates or updates only AgentLight-managed entries, and provides matching uninstall behavior. Agent-specific event maps are defined in `integrations/agents/hook.mjs`. The adapters fail open when AgentLight is unavailable and do not send prompts, source code, tool arguments, or terminal output.

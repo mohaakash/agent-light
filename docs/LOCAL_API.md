@@ -17,7 +17,7 @@ Initial transport: HTTP over loopback.
 - Do not enable permissive browser CORS by default.
 - Avoid logging authentication tokens.
 
-The exact token delivery mechanism to adapters must be designed before implementation. Prefer a protected local configuration file or OS credential storage over command-line arguments.
+The current implementation writes the endpoint and token to the AgentLight application configuration directory in `codex-bridge.json`. Codex, Claude Code, and the shared adapters read this file locally; the token is not passed through command-line arguments. OS credential-vault storage remains a future hardening option.
 
 ## 3. Initial endpoint
 
@@ -93,6 +93,6 @@ The API is for status metadata only. Do not accept full prompts, source files, t
 
 ## 9. Current implementation
 
-The server exposes `POST /api/v1/events` and `GET /api/v1/health` on `127.0.0.1:38527`. AgentLight creates a per-installation bearer token and writes the endpoint and token to its app configuration as `codex-bridge.json`; the Codex hook reads that file. Event submissions require the token, `application/json`, schema version `1`, and the `codex` agent. The payload is size-limited and routed through the session resolver before state is broadcast to both native windows.
+The server exposes `POST /api/v1/events` and `GET /api/v1/health` on `127.0.0.1:38527`. AgentLight creates a per-installation bearer token and writes the endpoint and token to its app configuration as `codex-bridge.json`; all installed adapters read that shared bridge file. Event submissions require the token, `application/json`, schema version `1`, and one of the implemented agent identifiers: `codex`, `claude`, `cursor`, `gemini`, `windsurf`, `copilot`, or `antigravity`. The payload is size-limited and routed through the session resolver before state is broadcast to the native windows and the matching per-agent widget.
 
 Requests produce one-line JSON logs with timestamp, level, route and HTTP status. Unknown request paths are logged as `unknown`; authorization values and event bodies are never logged. API tests cover health, authentication, content type, malformed payloads, core rejection, unknown routes, response framing, oversized content lengths, and a real loopback TCP request through the HTTP reader and writer. A GUI-driven test against a running Tauri instance remains separate.

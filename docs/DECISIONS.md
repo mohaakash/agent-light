@@ -58,7 +58,7 @@ This file records decisions so that implementation does not silently drift.
 
 **Reason:** A transparent, frameless Tauri window must initiate movement through the native window API. Handling the gesture on the widget root makes the entire indicator draggable, including its child light elements, and allows the OS to move it across monitor boundaries.
 
-**Compatibility:** This changes only window interaction. The widget remains non-resizable and always-on-top behavior is unchanged. Position persistence remains a later decision and will consume the native window position after drag completion.
+**Compatibility:** This changes only window interaction. The widget remains non-resizable and always-on-top behavior is unchanged. The native position is persisted in the application settings after drag completion and restored on launch with visible-monitor clamping.
 
 ### ADR-010: One real integration first
 
@@ -68,7 +68,7 @@ This file records decisions so that implementation does not silently drift.
 
 ### ADR-011: Lifecycle hooks over transcript polling
 
-**Decision:** Agent integrations use documented lifecycle hooks to send normalized status metadata to AgentLight's authenticated loopback endpoint. AgentLight does not poll or parse agent transcripts. Codex and Claude Code adapters are implemented.
+**Decision:** Agent integrations use documented lifecycle hooks to send normalized status metadata to AgentLight's authenticated loopback endpoint. AgentLight does not poll or parse agent transcripts. Codex, Claude Code, Cursor, Gemini CLI, Windsurf, GitHub Copilot CLI, and Antigravity adapters are implemented through dedicated or shared hook bridges.
 
 **Reason:** Hooks expose lifecycle points without coupling AgentLight to transcript internals. Hooks send only the canonical event, session identifier, project basename and timestamp; they never send prompts, source code, tool arguments or terminal output.
 
@@ -79,7 +79,7 @@ This file records decisions so that implementation does not silently drift.
 These are intentionally unresolved. Do not silently invent a final product decision.
 
 1. Which operating systems will receive validation beyond the current Windows development and packaging target?
-2. Which additional coding agents should be prioritized after the implemented Codex and Claude Code adapters?
+2. Which additional coding agents should be prioritized after the implemented Codex, Claude Code, and shared adapters? OpenCode and Pi are current candidates.
 3. Should the floating widget default to a classic three-light housing or a minimal three-dot design?
 4. Should the widget support click-through mode, and how will users regain interaction?
 5. Should closing the main window minimize to tray by default?

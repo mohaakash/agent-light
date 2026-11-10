@@ -46,7 +46,7 @@ Acceptance:
 
 ## Phase 2 — Canonical event and session core
 
-Implementation status: complete. The Rust core tracks independent sessions, validates Codex event envelopes, resolves aggregate priority, deduplicates IDs, ignores stale valid timestamps, expires stale work, and applies the five-second completion window. Unit tests cover event ordering and multi-session status priority.
+Implementation status: complete. The Rust core tracks independent sessions, validates normalized agent event envelopes, resolves aggregate priority, deduplicates IDs, ignores stale valid timestamps, expires stale work, and applies the five-second completion window. Unit tests cover event ordering and multi-session status priority.
 
 Tasks:
 - Define typed event and status models.
@@ -65,7 +65,7 @@ Acceptance:
 
 ## Phase 3 — Local API
 
-Implementation status: complete for the current Codex adapter. The loopback server exposes authenticated event ingress and a minimal health endpoint, emits structured JSON logs without event bodies or tokens, and has route, request-reader, and loopback TCP tests.
+Implementation status: complete for the current Codex, Claude Code, and shared agent adapters. The loopback server exposes authenticated event ingress and a minimal health endpoint, emits structured JSON logs without event bodies or tokens, and has route, request-reader, and loopback TCP tests.
 
 Tasks:
 - Implement loopback HTTP ingress.
@@ -84,7 +84,7 @@ Acceptance:
 
 ## Phase 4 — ESP8266 hardware output
 
-Implementation status: host-side serial discovery, connect/disconnect, device identity handshake, status forwarding, LED test controls and heartbeat handling are implemented. Initial ESP8266 firmware and PlatformIO configuration are present. Physical flashing, LED verification, unplug/reconnect testing and timeout validation remain open until tested with a NodeMCU.
+Implementation status: host-side serial discovery, connect/disconnect, device identity handshake, status forwarding, LED test controls and heartbeat handling are implemented. Firmware projects and PlatformIO configurations are present for ESP8266, ESP32, and Raspberry Pi Pico, with an Arduino sketch for compatible boards. Physical flashing, LED verification, unplug/reconnect testing and timeout validation remain open until tested with hardware.
 
 Tasks:
 - Build and flash firmware.
@@ -102,7 +102,7 @@ Acceptance:
 
 ## Phase 5 — Real agent integrations
 
-Implementation status: Codex and Claude Code lifecycle mappings, multi-session resolution, idempotent setup/uninstall, process-level Codex hook-to-HTTP tests, and privacy checks are implemented. A manual smoke test in a live agent session remains outstanding.
+Implementation status: Codex, Claude Code, Cursor, Gemini CLI, Windsurf, GitHub Copilot CLI, and Antigravity lifecycle mappings, multi-session resolution, idempotent setup/uninstall, process-level hook tests, and privacy checks are implemented. Manual smoke tests in live agent sessions remain outstanding.
 
 Tasks:
 - Select agents based on installed availability and documented event support.
@@ -119,10 +119,10 @@ Acceptance:
 
 ## Phase 6 — Multi-agent and product polish
 
-Implementation status: live per-session dashboard, persisted widget size/theme/opacity, system-tray controls, optional launch-at-login, Windows MSI/NSIS packaging, and CI artifact upload are implemented. Physical device verification is deferred by the user. Additional agent adapters, macOS/Linux packaging, live agent smoke testing, and multi-monitor/DPI validation remain open.
+Implementation status: live per-session dashboard, per-agent widget controls, persisted widget size/theme/opacity, system-tray controls, optional launch-at-login, Windows MSI/NSIS packaging, and CI artifact upload are implemented. Physical device verification is deferred by the user. OpenCode and Pi adapters, macOS/Linux packaging, live agent smoke testing, and multi-monitor/DPI validation remain open.
 
 Tasks:
-- Add remaining adapters one by one.
+- Add remaining adapters, beginning with OpenCode and Pi when their supported lifecycle interfaces are documented.
 - Improve session dashboard.
 - Add appearance settings.
 - Add tray behavior and startup options.
@@ -143,7 +143,7 @@ Acceptance:
 4. Physical hardware output.
 5. First real agent integration.
 6. Session dashboard and Windows installer artifacts (implemented).
-7. Additional integrations and compact/expanded widget layouts.
+7. OpenCode/Pi integrations and compact/expanded widget layouts.
 8. Live agent smoke tests, cross-platform packaging, and multi-monitor/DPI validation.
 
 This order keeps the app useful from the first milestone and reduces the risk of debugging hardware, agent hooks and UI simultaneously.
