@@ -52,7 +52,9 @@ function writeConfigAtomically(hooksPath, config) {
 export function installHooks({ codexHome = getCodexHome(), projectRoot = process.cwd() } = {}) {
   mkdirSync(codexHome, { recursive: true });
   const hooksPath = join(codexHome, "hooks.json");
+  const configPath = join(codexHome, "config.toml");
   const backupPath = `${hooksPath}.agentlight-backup`;
+  const configBackupPath = `${configPath}.agentlight-backup`;
   const config = readConfig(hooksPath);
   const hookCommand = getAgentLightHookCommand(projectRoot);
 
@@ -87,7 +89,66 @@ export function installHooks({ codexHome = getCodexHome(), projectRoot = process
   }
 
   writeConfigAtomically(hooksPath, config);
-  return { hooksPath, backupPath, hookCommand };
+  const featureChanged = ensureCodexHooksEnabled(configPath, configBackupPath);
+  return { hooksPath, backupPath, configPath, configBackupPath, featureChanged, hookCommand };
+}
+
+export function isHooksInstalled({ codexHome = getCodexHome(), projectRoot = process.cwd() } = {}) {
+  const hooksPath = join(codexHome, "hooks.json");
+  const configPath = join(codexHome, "config.toml");
+  if (!existsSync(hooksPath) || !existsSync(configPath)) return false;
+  try {
+    const config = readConfig(hooksPath);
+    const hookReady = HOOK_EVENTS.every((event) => (config.hooks[event] ?? [])
+      .some((group) => (group.hooks ?? []).some((hook) => hook.type === "command" && hook.command === getAgentLightHookCommand(projectRoot))));
+    const features = readFileSync(configPath, "utf8");
+    return hookReady && /\[features\][\s\S]*?\bhooks\s*=\s*true/.test(features);
+  } catch {
+    return false;
+  }
+}
+
+export function ensureCodexHooksEnabled(configPath, backupPath = `${configPath}.agentlight-backup`) {
+  let text = "";
+  try {
+    text = readFileSync(configPath, "utf8");
+  } catch (error) {
+    if (error.code !== "ENOENT") throw error;
+  }
+
+  if (existsSync(configPath) && !existsSync(backupPath)) copyFileSync(configPath, backupPath);
+  if (!text.trim()) {
+    writeFileSync(configPath, "[features]\nhooks = true\n", "utf8");
+    return true;
+  }
+
+  const lines = text.split(/\r?\n/);
+  const newline = text.includes("\r\n") ? "\r\n" : "\n";
+  const sectionPattern = /^\s*\[[^\]]+\]\s*$/;
+  const featuresAt = lines.findIndex((line) => /^\s*\[features\]\s*$/.test(line));
+  if (featuresAt >= 0) {
+    let sectionEnd = lines.length;
+    for (let index = featuresAt + 1; index < lines.length; index += 1) {
+      if (sectionPattern.test(lines[index])) {
+        sectionEnd = index;
+        break;
+      }
+    }
+    for (let index = featuresAt + 1; index < sectionEnd; index += 1) {
+      const match = lines[index].match(/^(\s*hooks\s*=\s*)(true|false)\s*$/);
+      if (!match) continue;
+      if (match[2] === "true") return false;
+      lines[index] = `${match[1]}true`;
+      writeFileSync(configPath, lines.join(newline), "utf8");
+      return true;
+    }
+    lines.splice(featuresAt + 1, 0, "hooks = true");
+    writeFileSync(configPath, lines.join(newline), "utf8");
+    return true;
+  }
+
+  writeFileSync(configPath, `${text.replace(/\s*$/, "")}\n\n[features]\nhooks = true\n`, "utf8");
+  return true;
 }
 
 export function uninstallHooks({ codexHome = getCodexHome(), projectRoot = process.cwd() } = {}) {

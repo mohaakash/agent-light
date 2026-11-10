@@ -137,7 +137,10 @@ fn refresh_display_state(app: &AppHandle, force: bool) -> Result<(), String> {
 
 fn validate(event: &AgentEvent) -> Result<(), String> {
     if event.schema_version != SCHEMA_VERSION
-        || !matches!(event.agent.as_str(), "codex" | "claude")
+        || !matches!(
+            event.agent.as_str(),
+            "codex" | "claude" | "cursor" | "gemini" | "windsurf" | "copilot" | "antigravity"
+        )
         || event.event_id.is_empty()
         || event.event_id.len() > 128
         || event.session_id.is_empty()
@@ -151,7 +154,7 @@ fn validate(event: &AgentEvent) -> Result<(), String> {
             .as_ref()
             .is_some_and(|occurred_at| occurred_at.len() > 64)
     {
-        return Err("invalid Codex event".to_string());
+        return Err("invalid AgentLight event".to_string());
     }
 
     Ok(())

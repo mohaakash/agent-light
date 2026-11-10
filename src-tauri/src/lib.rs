@@ -9,6 +9,7 @@ use commands::hardware::{
     connect_serial_device, disconnect_serial_device, get_hardware_status, list_serial_ports,
     start_hardware_heartbeat, test_hardware_led,
 };
+use commands::integrations::{get_agent_integration_status, install_agent_integration};
 use commands::sessions::{get_agent_display_snapshot, get_sessions};
 use commands::windows::{
     get_traffic_light_always_on_top, get_widget_appearance, set_agent_widget_visibility,
@@ -72,6 +73,8 @@ pub fn run() {
             connect_serial_device,
             disconnect_serial_device,
             test_hardware_led,
+            install_agent_integration,
+            get_agent_integration_status,
             get_sessions,
             get_agent_display_snapshot,
             set_agent_widget_visibility,

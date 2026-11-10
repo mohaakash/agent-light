@@ -11,7 +11,18 @@ pub fn set_agent_widget_visibility(
     agent: String,
     visible: bool,
 ) -> Result<(), String> {
-    if !["codex", "claude", "pi"].contains(&agent.as_str()) {
+    if ![
+        "codex",
+        "claude",
+        "cursor",
+        "gemini",
+        "windsurf",
+        "copilot",
+        "antigravity",
+        "pi",
+    ]
+    .contains(&agent.as_str())
+    {
         return Err("unknown agent widget".to_string());
     }
     let label = format!("traffic-light-{agent}");
@@ -32,7 +43,18 @@ pub fn set_agent_widget_visibility(
 
 #[tauri::command]
 pub fn start_agent_widget_drag(app: AppHandle, agent: String) -> Result<(), String> {
-    if !["codex", "claude", "pi"].contains(&agent.as_str()) {
+    if ![
+        "codex",
+        "claude",
+        "cursor",
+        "gemini",
+        "windsurf",
+        "copilot",
+        "antigravity",
+        "pi",
+    ]
+    .contains(&agent.as_str())
+    {
         return Err("unknown agent widget".to_string());
     }
     let label = format!("traffic-light-{agent}");

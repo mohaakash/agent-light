@@ -53,6 +53,19 @@ export function installHooks({ claudeConfigDir = getClaudeSettingsDir(), project
   return { settingsPath, backupPath, command };
 }
 
+export function isHooksInstalled({ claudeConfigDir = getClaudeSettingsDir(), projectRoot = process.cwd() } = {}) {
+  const settingsPath = join(claudeConfigDir, "settings.json");
+  if (!existsSync(settingsPath)) return false;
+  try {
+    const config = readConfig(settingsPath);
+    const command = getAgentLightHookCommand(projectRoot);
+    return HOOK_EVENTS.every((event) => (config.hooks[event] ?? [])
+      .some((group) => (group.hooks ?? []).some((hook) => hook.type === "command" && hook.command === command)));
+  } catch {
+    return false;
+  }
+}
+
 export function uninstallHooks({ claudeConfigDir = getClaudeSettingsDir(), projectRoot = process.cwd() } = {}) {
   const settingsPath = join(claudeConfigDir, "settings.json");
   if (!existsSync(settingsPath)) return { settingsPath, removed: 0 };

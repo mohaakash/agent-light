@@ -8,10 +8,13 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "test:codex": "node --test integrations/codex/hooks-lib.test.mjs integrations/codex/hook.test.mjs",
+    "test:integrations": "node --test integrations/codex/hooks-lib.test.mjs integrations/codex/hook.test.mjs integrations/agents/hooks.test.mjs",
     "preview": "vite preview",
     "tauri": "tauri"
   },
   "dependencies": {
+    "@fontsource-variable/inter": "^5.3.0",
+    "@fontsource/jetbrains-mono": "^5.3.0",
     "@tauri-apps/api": "^2.12.4",
     "@tauri-apps/plugin-autostart": "^2.7.0",
     "react": "^18.3.1",

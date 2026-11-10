@@ -21,7 +21,7 @@ export const DISPLAY_META: Record<DisplayState, { label: string; detail: string;
     color: "#facc15",
   },
   COMPLETED: {
-    label: "Completed",
+    label: "Success",
     detail: "A tracked task has completed",
     color: "#4ade80",
   },

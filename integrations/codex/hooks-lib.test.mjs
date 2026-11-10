@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 
-import { HOOK_EVENTS, installHooks, uninstallHooks, getAgentLightHookCommand } from "./hooks-lib.mjs";
+import { HOOK_EVENTS, installHooks, isHooksInstalled, uninstallHooks, getAgentLightHookCommand } from "./hooks-lib.mjs";
 
 function withTempCodexHome(run) {
   const codexHome = mkdtempSync(join(tmpdir(), "agentlight-codex-").replaceAll("\\", "/"));
@@ -18,6 +18,7 @@ function withTempCodexHome(run) {
 test("install merges hooks, backs up original config, and is idempotent", () => {
   withTempCodexHome((codexHome) => {
     const hooksPath = join(codexHome, "hooks.json");
+    const configPath = join(codexHome, "config.toml");
     const original = {
       description: "User hooks",
       hooks: {
@@ -29,6 +30,8 @@ test("install merges hooks, backs up original config, and is idempotent", () => 
     const installed = installHooks({ codexHome, projectRoot: process.cwd() });
     const merged = JSON.parse(readFileSync(hooksPath, "utf8"));
     assert.deepEqual(JSON.parse(readFileSync(installed.backupPath, "utf8")), original);
+    assert.match(readFileSync(configPath, "utf8"), /\[features\][\s\S]*hooks = true/);
+    assert.equal(isHooksInstalled({ codexHome, projectRoot: process.cwd() }), true);
     assert.equal(merged.description, "User hooks");
     assert.equal(merged.hooks.PreToolUse[0].hooks[0].command, "keep-me");
     for (const event of HOOK_EVENTS) {

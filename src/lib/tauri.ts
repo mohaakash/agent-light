@@ -55,6 +55,14 @@ export function getSessions(): Promise<AgentSession[]> {
   return invoke<AgentSession[]>("get_sessions");
 }
 
+export function installAgentIntegration(agent: "codex" | "claude" | "cursor" | "gemini" | "windsurf" | "copilot" | "antigravity"): Promise<string> {
+  return invoke<string>("install_agent_integration", { agent });
+}
+
+export function getAgentIntegrationStatus(agent: "codex" | "claude" | "cursor" | "gemini" | "windsurf" | "copilot" | "antigravity"): Promise<boolean> {
+  return invoke<boolean>("get_agent_integration_status", { agent });
+}
+
 export function getAgentDisplaySnapshot(agent: string): Promise<DisplaySnapshot> {
   return invoke<DisplaySnapshot>("get_agent_display_snapshot", { agent });
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties } from "react";
+import { useEffect, useState } from "react";
 import { disable as disableAutostart, enable as enableAutostart, isEnabled as isAutostartEnabled } from "@tauri-apps/plugin-autostart";
 import { DISPLAY_META, DISPLAY_STATES, type DisplaySnapshot, type DisplayState } from "../lib/display";
 import {
@@ -18,6 +18,8 @@ import {
   subscribeToHardwareStatus,
   subscribeToDisplayState,
   testHardwareLed,
+  installAgentIntegration,
+  getAgentIntegrationStatus,
   type HardwareStatus,
   type AgentSession,
   type WidgetAppearance,
@@ -26,6 +28,9 @@ import {
 import "./app.css";
 
 type AppTab = "overview" | "agents" | "virtual" | "hardware";
+
+const INTEGRATION_AGENTS = ["codex", "claude", "cursor", "gemini", "windsurf", "copilot", "antigravity"] as const;
+type IntegrationAgent = typeof INTEGRATION_AGENTS[number];
 
 const NAV_ITEMS: { id: AppTab; label: string; icon: string }[] = [
   { id: "overview", label: "Overview", icon: "overview" },
@@ -44,8 +49,9 @@ function TabIcon({ name }: { name: string }) {
 
 export function App() {
   const [activeTab, setActiveTab] = useState<AppTab>("overview");
-  const [expandedAgent, setExpandedAgent] = useState<string | null>(null);
-  const [agentWidgetVisibility, setAgentWidgetVisibilityState] = useState<Record<string, boolean>>({ codex: false, claude: false, pi: false });
+  const [agentWidgetVisibility, setAgentWidgetVisibilityState] = useState<Record<string, boolean>>(
+    Object.fromEntries([...INTEGRATION_AGENTS, "pi"].map((agent) => [agent, false])),
+  );
   const [snapshot, setSnapshot] = useState<DisplaySnapshot>({ state: "IDLE", source: "manual_preview" });
   const [alwaysOnTop, setAlwaysOnTop] = useState(true);
   const [launchAtLogin, setLaunchAtLogin] = useState(false);
@@ -61,6 +67,9 @@ export function App() {
   const [widgetAppearance, setWidgetAppearanceState] = useState<WidgetAppearance>({ size: "standard", theme: "dark", opacity: 100 });
   const [selectedPort, setSelectedPort] = useState("");
   const [hardwareBusy, setHardwareBusy] = useState(false);
+  const [installingAgent, setInstallingAgent] = useState<string | null>(null);
+  const [integrationStatus, setIntegrationStatus] = useState<Record<string, string>>({});
+  const [installedAgents, setInstalledAgents] = useState<Record<string, boolean>>({});
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -77,6 +86,10 @@ export function App() {
         setWidgetAppearanceState(nextAppearance);
         setLaunchAtLogin(nextLaunchAtLogin);
       })
+      .catch((reason: unknown) => setError(String(reason)));
+
+    void Promise.all(INTEGRATION_AGENTS.map(async (agent) => [agent, await getAgentIntegrationStatus(agent)] as const))
+      .then((statuses) => setInstalledAgents(Object.fromEntries(statuses)))
       .catch((reason: unknown) => setError(String(reason)));
 
     const refreshSessions = () => {
@@ -200,6 +213,22 @@ export function App() {
     }
   }
 
+  async function installIntegration(agent: string) {
+    if (!INTEGRATION_AGENTS.includes(agent as IntegrationAgent)) return;
+    const integrationAgent = agent as IntegrationAgent;
+    setInstallingAgent(agent);
+    try {
+      const result = await installAgentIntegration(integrationAgent);
+      setIntegrationStatus((current) => ({ ...current, [agent]: result }));
+      setInstalledAgents((current) => ({ ...current, [agent]: true }));
+      setError(null);
+    } catch (reason) {
+      setError(String(reason));
+    } finally {
+      setInstallingAgent(null);
+    }
+  }
+
   const meta = DISPLAY_META[snapshot.state];
   const workingSessions = sessions.filter((session) => session.state === "WORKING");
   const attentionSessions = sessions.filter((session) => session.state === "WAITING" || session.state === "ERROR");
@@ -225,30 +254,46 @@ export function App() {
   }
 
   const agentCards = [
-    { id: "codex", name: "OpenAI Codex", summary: "Lifecycle hooks · permissions · completions", command: "node integrations/codex/install.mjs", supported: true },
-    { id: "claude", name: "Claude Code", summary: "Lifecycle hooks · permissions · errors", command: "node integrations/claude/install.mjs", supported: true },
-    { id: "pi", name: "Pi", summary: "Agent adapter is not implemented yet", command: "", supported: false },
+    { id: "codex", name: "OpenAI Codex", glyph: "C", summary: "Lifecycle hooks · permissions · completions", supported: true },
+    { id: "claude", name: "Claude Code", glyph: "✳", summary: "Lifecycle hooks · permissions · errors", supported: true },
+    { id: "cursor", name: "Cursor", glyph: "⌁", summary: "Prompt · tool · subagent lifecycle hooks", supported: true },
+    { id: "gemini", name: "Gemini CLI", glyph: "✦", summary: "Agent · tool · notification lifecycle hooks", supported: true },
+    { id: "windsurf", name: "Windsurf", glyph: "W", summary: "Cascade · tool · workspace lifecycle hooks", supported: true },
+    { id: "copilot", name: "GitHub Copilot CLI", glyph: "◉", summary: "Prompt · tool · permission lifecycle hooks", supported: true },
+    { id: "antigravity", name: "Antigravity CLI", glyph: "△", summary: "Invocation · tool · completion lifecycle hooks", supported: true },
+    { id: "pi", name: "Pi", glyph: "π", summary: "Agent adapter is not implemented yet", supported: false },
   ];
 
   return (
     <main className="dashboard-shell">
-      <nav className="tab-bar" aria-label="Main sections" role="tablist">
-        {NAV_ITEMS.map((item) => (
-          <button
-            aria-selected={activeTab === item.id}
-            className={activeTab === item.id ? "tab-button active" : "tab-button"}
-            key={item.id}
-            onClick={() => setActiveTab(item.id)}
-            role="tab"
-            type="button"
-          >
-            <TabIcon name={item.icon} />
-            <span>{item.label}</span>
-          </button>
-        ))}
-      </nav>
+      <header className="app-header" data-tauri-drag-region>
+        <div className="brand-lockup" data-tauri-drag-region>
+          <span className="brand-mark" aria-hidden="true"><span /><span /><span /></span>
+          <span className="brand-name">AgentLight</span>
+          <span className="brand-version">0.1.0</span>
+        </div>
+        <nav className="tab-bar" aria-label="Main sections" role="tablist">
+          {NAV_ITEMS.map((item) => (
+            <button
+              aria-selected={activeTab === item.id}
+              className={activeTab === item.id ? "tab-button active" : "tab-button"}
+              key={item.id}
+              onClick={() => setActiveTab(item.id)}
+              role="tab"
+              type="button"
+            >
+              <TabIcon name={item.icon} />
+              <span>{item.label}</span>
+              {item.id === "agents" && activeAgents > 0 ? <span className="nav-badge">{activeAgents}</span> : null}
+            </button>
+          ))}
+        </nav>
+      </header>
 
-      <div className="tab-view" key={activeTab} role="tabpanel">
+      <div className="app-body">
+        <section className="workspace-surface">
+          <div className="workspace-scroll">
+          <div className="tab-view" key={activeTab} role="tabpanel">
       {activeTab === "overview" ? <>
       <div className="page-heading">
         <div><p className="eyebrow">YOUR WORKSPACE</p><h2>Overview</h2></div>
@@ -258,7 +303,7 @@ export function App() {
         <article className="stat-card"><span className="stat-label">Active sessions</span><strong>{activeSessions.length}</strong><span className="stat-foot">Across {activeAgents} agents</span></article>
         <article className="stat-card"><span className="stat-label">Working</span><strong className="stat-working">{workingSessions.length}</strong><span className="stat-foot">Processing right now</span></article>
         <article className="stat-card"><span className="stat-label">Needs attention</span><strong className="stat-attention">{attentionSessions.length}</strong><span className="stat-foot">Permission or error</span></article>
-        <article className="stat-card"><span className="stat-label">Tracked sessions</span><strong>{sessions.length}</strong><span className="stat-foot">Codex and Claude Code</span></article>
+        <article className="stat-card"><span className="stat-label">Tracked sessions</span><strong>{sessions.length}</strong><span className="stat-foot">Across configured agents</span></article>
       </section>
       <section className="overview-grid">
         <article className="panel state-panel">
@@ -296,7 +341,7 @@ export function App() {
               <p className="eyebrow">AGENT SESSIONS</p>
               <h2>{sessions.length} tracked</h2>
             </div>
-            <span className="session-agent-badge">Codex + Claude</span>
+            <span className="session-agent-badge">All configured agents</span>
           </div>
           {renderSessionList("No agent sessions yet. Start Codex or Claude Code to see activity here.")}
         </article>
@@ -308,21 +353,20 @@ export function App() {
         <section className="agent-cards">
           {agentCards.map((agent) => {
             const agentSessions = sessions.filter((session) => session.agent === agent.id);
-            const isExpanded = expandedAgent === agent.id;
             return (
               <article className="panel agent-card" key={agent.id}>
                 <div className="agent-card-top">
-                  <div className={`agent-glyph agent-${agent.id}`} aria-hidden="true">{agent.id === "codex" ? "C" : agent.id === "claude" ? "✳" : "π"}</div>
-                  <span className={agent.supported ? "agent-status supported" : "agent-status planned"}>{agent.supported ? "Adapter ready" : "Coming later"}</span>
+                  <div className={`agent-glyph agent-${agent.id}`} aria-hidden="true">{agent.glyph}</div>
+                  <span className={installedAgents[agent.id] ? "agent-status supported" : "agent-status planned"}>{agent.supported ? (installedAgents[agent.id] ? "Ready" : "Not installed") : "Coming later"}</span>
                 </div>
                 <h3>{agent.name}</h3>
                 <p className="panel-copy">{agent.summary}</p>
                 <div className="agent-card-meta"><span>{agentSessions.length} tracked</span><span>{agentSessions.filter((session) => session.state === "WORKING").length} working</span></div>
                 {agent.supported ? <>
-                  <button className="secondary-button setup-toggle" onClick={() => setExpandedAgent(isExpanded ? null : agent.id)} type="button">
-                    {isExpanded ? "Hide setup" : "Setup integration"}
+                  <button className="secondary-button setup-toggle" disabled={installingAgent !== null} onClick={() => void installIntegration(agent.id)} type="button">
+                    {installingAgent === agent.id ? "Installing…" : installedAgents[agent.id] ? "Installed globally" : "Install globally"}
                   </button>
-                  {isExpanded ? <div className="setup-instructions"><p>Run from the AgentLight project folder:</p><code>{agent.command}</code><span>Restart the agent after installing its lifecycle hook.</span></div> : null}
+                  {integrationStatus[agent.id] ? <div className="setup-instructions"><p>Global configuration updated</p><code>{integrationStatus[agent.id]}</code><span>Applies to every project opened with this agent.</span></div> : null}
                 </> : <p className="widget-hint">Pi sessions will appear here once its adapter is available.</p>}
               </article>
             );
@@ -344,6 +388,10 @@ export function App() {
             <label className="opacity-setting">Opacity <span>{widgetAppearance.opacity}%</span><input max={100} min={40} onChange={(event) => void changeWidgetAppearance({ ...widgetAppearance, opacity: Number(event.target.value) })} type="range" value={widgetAppearance.opacity} /></label>
           </div>
           <button className="secondary-button startup-toggle" onClick={() => void toggleLaunchAtLogin()} type="button">{launchAtLogin ? "Launch at login: On" : "Launch at login: Off"}</button>
+          <div className="widget-actions">
+            <button className="secondary-button" onClick={() => void toggleVisibility()} type="button">{trafficLightVisible ? "Hide virtual lights" : "Show virtual lights"}</button>
+            <button className="secondary-button" onClick={() => void toggleAlwaysOnTop()} type="button">{alwaysOnTop ? "Always on top: On" : "Always on top: Off"}</button>
+          </div>
           <p className="widget-hint">Appearance is shared across the agent lights. Closing this dashboard hides it in the system tray.</p>
         </article>
         <article className="panel preview-panel"><p className="eyebrow">CURRENT DISPLAY</p><div className={`preview-light preview-${snapshot.state.toLowerCase()}`}><i /><i /><i /></div><strong>{meta.label}</strong><span>{meta.detail}</span></article>
@@ -404,12 +452,11 @@ export function App() {
         <article className="panel hardware-note"><p className="eyebrow">DEVICE STATUS</p><h3>ESP8266 traffic light</h3><p className="panel-copy">{hardwareStatus.connected ? `Connected on ${hardwareStatus.port_name}. It mirrors the resolved agent status.` : "Connect a NodeMCU over USB to mirror the virtual light. The virtual output continues to work without hardware."}</p><div className="hardware-state-pill"><span className={`session-state state-${snapshot.state.toLowerCase()}`} />Current output: {meta.label}</div></article>
         </section>
       </> : null}
-      </div>
+          </div>
+          </div>
 
-      <footer className="dashboard-footer">
-        <span>AgentLight · local-first</span>
-        <span>Prompts and source code stay on your device.</span>
-      </footer>
+        </section>
+      </div>
 
       {error ? <p className="error-banner">{error}</p> : null}
     </main>
