@@ -107,10 +107,25 @@ jobs:
           REPOSITORY: ${{ github.repository }}
           COMMIT: ${{ github.sha }}
         run: |
-          git tag "v$VERSION" "$COMMIT"
-          git push origin "v$VERSION"
-          gh release create "v$VERSION" \
-            --repo "$REPOSITORY" \
-            --title "AgentLight v$VERSION" \
-            --generate-notes
-          find release-assets -type f -print0 | xargs -0 -r gh release upload "v$VERSION" --repo "$REPOSITORY"
+          set -euo pipefail
+          tag="v$VERSION"
+          if git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
+            test "$(git rev-list -n 1 "$tag")" = "$COMMIT"
+          else
+            git tag "$tag" "$COMMIT"
+            git push origin "refs/tags/$tag"
+          fi
+          if ! gh release view "$tag" --repo "$REPOSITORY" >/dev/null 2>&1; then
+            gh release create "$tag" \
+              --repo "$REPOSITORY" \
+              --title "AgentLight v$VERSION" \
+              --generate-notes
+          fi
+          for platform in Windows macOS Linux; do
+            if ! find "release-assets/AgentLight-$platform" -type f \( -name '*.msi' -o -name '*-setup.exe' -o -name '*.dmg' -o -name '*.deb' -o -name '*.AppImage' \) -print -quit | grep -q .; then
+              echo "No installer found for $platform" >&2
+              exit 1
+            fi
+          done
+          find release-assets -type f \( -name '*.msi' -o -name '*-setup.exe' -o -name '*.dmg' -o -name '*.deb' -o -name '*.AppImage' \) -print0 | \
+            xargs -0 -r gh release upload "$tag" --repo "$REPOSITORY" --clobber
