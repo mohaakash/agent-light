@@ -54,12 +54,28 @@ function eventForHook(agentId, eventName, input) {
   return EVENT_MAP[agentId]?.[eventName];
 }
 
+// Best-effort detection of the application hosting the agent so AgentLight can
+// raise the right window when the user clicks an attention light.
+function detectClientApp(env = process.env) {
+  if (env.CURSOR_TRACE_ID || env.CURSOR_AGENT) return "cursor";
+  if (env.TERM_PROGRAM === "vscode" || env.VSCODE_PID || env.VSCODE_IPC_HOOK_CLI) return "vscode";
+  if (env.WINDSURF_SESSION || env.CODEIUM_SESSION) return "windsurf";
+  if (env.TERM_PROGRAM) return String(env.TERM_PROGRAM).toLowerCase();
+  if (env.WT_SESSION) return "windows-terminal";
+  return null;
+}
+
+function parentProcessId() {
+  const pid = typeof process.ppid === "number" ? process.ppid : 0;
+  return pid > 0 ? pid : null;
+}
+
 function normalizeHookInput(agentId, input, fallbackEvent) {
   const eventName = firstString(input.hook_event_name, input.event, input.event_name, fallbackEvent);
   const event = eventForHook(agentId, eventName, input);
   if (!event) return null;
   const sessionId = firstString(input.session_id, input.sessionId, input.conversation_id, input.conversationId, input.execution_id, "default");
-  const cwd = firstString(input.cwd, input.workspace_root, input.project_dir, input.directory, input.workspace_path, Array.isArray(input.workspacePaths) ? input.workspacePaths[0] : "");
+  const cwd = firstString(input.cwd, input.workspace_root, input.project_dir, input.directory, input.workspace_path, Array.isArray(input.workspacePaths) ? input.workspacePaths[0] : "") || process.cwd();
   return {
     schema_version: 1,
     event_id: randomUUID(),
@@ -68,6 +84,9 @@ function normalizeHookInput(agentId, input, fallbackEvent) {
     project: cwd ? basename(cwd) : null,
     event,
     occurred_at: new Date().toISOString(),
+    cwd: cwd || null,
+    client_app: detectClientApp(),
+    process_id: parentProcessId(),
   };
 }
 

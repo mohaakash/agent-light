@@ -26,17 +26,37 @@ export function configDirectory() {
   return join(process.env.XDG_CONFIG_HOME ?? join(homedir(), ".config"), "com.agentlight.app");
 }
 
+// Best-effort detection of the application hosting the agent so AgentLight can
+// raise the right window when the user clicks an attention light.
+function detectClientApp(env = process.env) {
+  if (env.CURSOR_TRACE_ID || env.CURSOR_AGENT) return "cursor";
+  if (env.TERM_PROGRAM === "vscode" || env.VSCODE_PID || env.VSCODE_IPC_HOOK_CLI) return "vscode";
+  if (env.WINDSURF_SESSION || env.CODEIUM_SESSION) return "windsurf";
+  if (env.TERM_PROGRAM) return String(env.TERM_PROGRAM).toLowerCase();
+  if (env.WT_SESSION) return "windows-terminal";
+  return null;
+}
+
+function parentProcessId() {
+  const pid = typeof process.ppid === "number" ? process.ppid : 0;
+  return pid > 0 ? pid : null;
+}
+
 export function normalizeHookInput(input) {
   const event = EVENT_MAP[input?.hook_event_name];
   if (!event || typeof input.session_id !== "string" || input.session_id.length === 0) return null;
+  const cwd = typeof input.cwd === "string" && input.cwd ? input.cwd : process.cwd();
   return {
     schema_version: 1,
     event_id: randomUUID(),
     agent: "claude",
     session_id: input.session_id,
-    project: typeof input.cwd === "string" ? basename(input.cwd) : null,
+    project: cwd ? basename(cwd) : null,
     event,
     occurred_at: new Date().toISOString(),
+    cwd: cwd || null,
+    client_app: detectClientApp(),
+    process_id: parentProcessId(),
   };
 }
 

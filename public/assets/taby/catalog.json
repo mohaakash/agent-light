@@ -1,0 +1,156 @@
+{
+  "schema": "agentlight_taby_face_pack_v1",
+  "source": "TRIIIS-LABS/firmware-taby assets/amoled-1.64",
+  "source_pack_version": "0.4.1",
+  "display": {
+    "width": 280,
+    "height": 456
+  },
+  "animation_count": 12,
+  "animations": [
+    {
+      "id": "idle_01_loop",
+      "version": 1,
+      "duration_ms": 9042,
+      "fallback_label": "IDLE",
+      "loop_policy": "loop",
+      "relative_path": "a/5e63dbe6.gif",
+      "byte_length": 108585,
+      "sha256": "b11cae58a6973f7f3ef9c373d5d894fa7f5c981785e0311db2a117155ec28f18",
+      "poster_path": "posters/idle_01_loop.webp",
+      "poster_byte_length": 2184
+    },
+    {
+      "id": "working_laptop_loop",
+      "version": 1,
+      "duration_ms": 2667,
+      "fallback_label": "WORKING",
+      "loop_policy": "loop",
+      "relative_path": "a/cdd1dbdc.gif",
+      "byte_length": 26566,
+      "sha256": "3b99a0ea2826c6edf2295655016e843a8bcd20a2f224cb5f59679c01e08a2110",
+      "poster_path": "posters/working_laptop_loop.webp",
+      "poster_byte_length": 4556
+    },
+    {
+      "id": "waiting_01",
+      "version": 1,
+      "duration_ms": 12917,
+      "fallback_label": "WAITING",
+      "loop_policy": "play_once",
+      "relative_path": "a/afd018ca.gif",
+      "byte_length": 418664,
+      "sha256": "2bb5038bee37c320306918ec4fd15abb5bddbc5ab96b84e11fc08244fbeb31ce",
+      "poster_path": "posters/waiting_01.webp",
+      "poster_byte_length": 1490
+    },
+    {
+      "id": "angry_01_loop",
+      "version": 1,
+      "duration_ms": 2542,
+      "fallback_label": "ANGRY",
+      "loop_policy": "loop",
+      "relative_path": "a/342748ab.gif",
+      "byte_length": 61431,
+      "sha256": "28273fe5dc5aaaa56120e3a5f64682a71752a29627d7ed983993c445c184cf20",
+      "poster_path": "posters/angry_01_loop.webp",
+      "poster_byte_length": 3848
+    },
+    {
+      "id": "angry_02_loop",
+      "version": 1,
+      "duration_ms": 2500,
+      "fallback_label": "ANGRY",
+      "loop_policy": "loop",
+      "relative_path": "a/ab6244d8.gif",
+      "byte_length": 53555,
+      "sha256": "dc0c6f6a86ec1029fb39c66e14b275726b62d20fe89689753e5704ec56ceb693",
+      "poster_path": "posters/angry_02_loop.webp",
+      "poster_byte_length": 3424
+    },
+    {
+      "id": "task_completed",
+      "version": 1,
+      "duration_ms": 3125,
+      "fallback_label": "DONE",
+      "loop_policy": "play_once",
+      "relative_path": "a/2a3d7c56.gif",
+      "byte_length": 81531,
+      "sha256": "f4d1fcb5056d385fba7e79525ff74d041f0bd1a35124e4ee20664f0bdb5cd7e3",
+      "poster_path": "posters/task_completed.webp",
+      "poster_byte_length": 2194
+    },
+    {
+      "id": "calm_idle_01_f000",
+      "version": 1,
+      "duration_ms": 1000,
+      "fallback_label": "IDLE",
+      "loop_policy": "loop",
+      "relative_path": "a/684df770.gif",
+      "byte_length": 2485,
+      "sha256": "8c1f47d3e90074f41eebba875f545c9489ebe14cccea3a6eb571bedcc86c75e4",
+      "poster_path": "posters/calm_idle_01_f000.webp",
+      "poster_byte_length": 2116
+    },
+    {
+      "id": "calm_work_medium_f000",
+      "version": 1,
+      "duration_ms": 1000,
+      "fallback_label": "WORKING",
+      "loop_policy": "loop",
+      "relative_path": "a/d18417a7.gif",
+      "byte_length": 15070,
+      "sha256": "6bb3fc0c5570f407fe6f29df72916a2ddaa71cd5124526d345db4126dea52150",
+      "poster_path": "posters/calm_work_medium_f000.webp",
+      "poster_byte_length": 7574
+    },
+    {
+      "id": "confirmation",
+      "version": 1,
+      "duration_ms": 1958,
+      "fallback_label": "DONE",
+      "loop_policy": "play_once",
+      "relative_path": "a/72811854.gif",
+      "byte_length": 60958,
+      "sha256": "c7886cf00f6795050713dc20c8c2aeb19627adda322474cce503af404c1b4c46",
+      "poster_path": "posters/confirmation.webp",
+      "poster_byte_length": 5456
+    },
+    {
+      "id": "idle_02_loop",
+      "version": 1,
+      "duration_ms": 7875,
+      "fallback_label": "IDLE",
+      "loop_policy": "loop",
+      "relative_path": "a/523e19a5.gif",
+      "byte_length": 51351,
+      "sha256": "53ff11c489482ee9183dd9078064787e07230a723c25b1130ea151f9895b0707",
+      "poster_path": "posters/idle_02_loop.webp",
+      "poster_byte_length": 1982
+    },
+    {
+      "id": "working_laptop_excited_loop",
+      "version": 1,
+      "duration_ms": 1667,
+      "fallback_label": "WORKING",
+      "loop_policy": "loop",
+      "relative_path": "a/8d8c83cf.gif",
+      "byte_length": 42982,
+      "sha256": "428292c534da4d2f4b500554a9f84cb2f2f1e9f13848836b229d9a23efd30576",
+      "poster_path": "posters/working_laptop_excited_loop.webp",
+      "poster_byte_length": 10026
+    },
+    {
+      "id": "thumbs_up",
+      "version": 1,
+      "duration_ms": 3167,
+      "fallback_label": "YES",
+      "loop_policy": "play_once",
+      "relative_path": "a/2620c9f8.gif",
+      "byte_length": 73021,
+      "sha256": "8f1fd3fd2d934ba14c0a0c0f823720c86aa7c290f8f10d9ba31334c9de39044e",
+      "poster_path": "posters/thumbs_up.webp",
+      "poster_byte_length": 2038
+    }
+  ]
+}

@@ -1,0 +1,121 @@
+/* MacBook-notch silhouette. The overall face widget retains its existing
+   viewport dimensions; only its black outer frame takes on the notch outline. */
+.animated-face-notch {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  opacity: var(--widget-opacity, 1);
+  --notch-ear-width: 5.5%;
+  --notch-ear-height: 9%;
+  --notch-radius-x: 9%;
+  --notch-radius-y: 13%;
+}
+
+.animated-face-notch-body {
+  position: absolute;
+  top: 0;
+  right: var(--notch-ear-width);
+  bottom: 0;
+  left: var(--notch-ear-width);
+  overflow: hidden;
+  border-radius: 0 0 var(--notch-radius-x) var(--notch-radius-x) /
+    0 0 var(--notch-radius-y) var(--notch-radius-y);
+  background: #000;
+}
+
+/* Concave top ears copied from the provided MacBook-notch geometry. */
+.animated-face-notch::before,
+.animated-face-notch::after {
+  position: absolute;
+  top: 0;
+  z-index: 1;
+  width: var(--notch-ear-width);
+  height: var(--notch-ear-height);
+  background: #000;
+  content: "";
+  pointer-events: none;
+}
+
+.animated-face-notch::before {
+  left: 0;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M0 0 H12 V12 A12 12 0 0 0 0 0 Z' fill='%23000'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M0 0 H12 V12 A12 12 0 0 0 0 0 Z' fill='%23000'/%3E%3C/svg%3E");
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+}
+
+.animated-face-notch::after {
+  right: 0;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M12 0 H0 V12 A12 12 0 0 1 12 0 Z' fill='%23000'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M12 0 H0 V12 A12 12 0 0 1 12 0 Z' fill='%23000'/%3E%3C/svg%3E");
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+}
+
+.animated-face-image {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  /* Keep the original image scale: only crop its black sides to the notch body. */
+  width: 100vh;
+  height: 100vw;
+  object-fit: contain;
+  transform: translate(-50%, -50%) rotate(270deg);
+  image-rendering: auto;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* Bottom-edge notches mirror the top geometry. */
+.animated-face-notch[data-hotzone-anchor="center_bottom"]::before,
+.animated-face-notch[data-hotzone-anchor="bottom_left"]::before,
+.animated-face-notch[data-hotzone-anchor="bottom_right"]::before,
+.animated-face-notch[data-hotzone-anchor="center_bottom"]::after,
+.animated-face-notch[data-hotzone-anchor="bottom_left"]::after,
+.animated-face-notch[data-hotzone-anchor="bottom_right"]::after {
+  top: auto;
+  bottom: 0;
+  /* Mirror each ear vertically without swapping left/right. A 180° rotation
+     put the concave curves on the wrong corner for bottom-left/right anchors. */
+  transform: scaleY(-1);
+}
+.animated-face-notch[data-hotzone-anchor="center_bottom"] .animated-face-notch-body,
+.animated-face-notch[data-hotzone-anchor="bottom_left"] .animated-face-notch-body,
+.animated-face-notch[data-hotzone-anchor="bottom_right"] .animated-face-notch-body {
+  top: 0;
+  bottom: 0;
+  border-radius: var(--notch-radius-x) var(--notch-radius-x) 0 0 /
+    var(--notch-radius-y) var(--notch-radius-y) 0 0;
+}
+
+/* Centered side notches use square corners on the attached edge. */
+.animated-face-notch[data-hotzone-anchor="center_left"] .animated-face-notch-body,
+.animated-face-notch[data-hotzone-anchor="center_right"] .animated-face-notch-body {
+  right: 0;
+  left: 0;
+}
+.animated-face-notch[data-hotzone-anchor="center_left"] .animated-face-notch-body {
+  border-radius: 0 var(--notch-radius-x) var(--notch-radius-x) 0 /
+    0 var(--notch-radius-y) var(--notch-radius-y) 0;
+}
+.animated-face-notch[data-hotzone-anchor="center_right"] .animated-face-notch-body {
+  border-radius: var(--notch-radius-x) 0 0 var(--notch-radius-x) /
+    var(--notch-radius-y) 0 0 var(--notch-radius-y);
+}
+.animated-face-notch[data-hotzone-anchor="center_left"]::before,
+.animated-face-notch[data-hotzone-anchor="center_left"]::after,
+.animated-face-notch[data-hotzone-anchor="center_right"]::before,
+.animated-face-notch[data-hotzone-anchor="center_right"]::after {
+  display: none;
+}
+
+/* At a screen corner, square every corner touching either attached edge. */
+.animated-face-notch[data-hotzone-anchor="top_left"] .animated-face-notch-body { border-bottom-left-radius: 0; }
+.animated-face-notch[data-hotzone-anchor="top_right"] .animated-face-notch-body { border-bottom-right-radius: 0; }
+.animated-face-notch[data-hotzone-anchor="bottom_left"] .animated-face-notch-body { border-top-left-radius: 0; }
+.animated-face-notch[data-hotzone-anchor="bottom_right"] .animated-face-notch-body { border-top-right-radius: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animated-face-notch { transition: none; }
+}

@@ -19,6 +19,9 @@ pub struct SessionSnapshot {
     pub project: Option<String>,
     pub state: DisplayState,
     pub seconds_since_event: u64,
+    pub cwd: Option<String>,
+    pub client_app: Option<String>,
+    pub process_id: Option<u32>,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq)]
@@ -43,6 +46,9 @@ pub struct SessionEvent {
     pub project: Option<String>,
     pub kind: EventKind,
     pub occurred_at: Option<String>,
+    pub cwd: Option<String>,
+    pub client_app: Option<String>,
+    pub process_id: Option<u32>,
 }
 
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
@@ -58,6 +64,9 @@ struct Session {
     last_event_at: Instant,
     source_timestamp: Option<DateTime<Utc>>,
     completed_at: Option<Instant>,
+    cwd: Option<String>,
+    client_app: Option<String>,
+    process_id: Option<u32>,
 }
 
 #[derive(Debug)]
@@ -91,6 +100,24 @@ impl SessionManager {
             .unwrap_or(DisplayState::Idle)
     }
 
+    pub fn state_for_session(&self, agent: &str, session_id: &str) -> Option<DisplayState> {
+        self.sessions
+            .get(&SessionKey {
+                agent: agent.to_string(),
+                session_id: session_id.to_string(),
+            })
+            .map(|session| session.state)
+    }
+
+    pub fn project_for_session(&self, agent: &str, session_id: &str) -> Option<String> {
+        self.sessions
+            .get(&SessionKey {
+                agent: agent.to_string(),
+                session_id: session_id.to_string(),
+            })
+            .and_then(|session| session.project.clone())
+    }
+
     pub fn snapshots(&self, now: Instant) -> Vec<SessionSnapshot> {
         let mut snapshots: Vec<_> = self
             .sessions
@@ -103,6 +130,9 @@ impl SessionManager {
                 seconds_since_event: now
                     .saturating_duration_since(session.last_event_at)
                     .as_secs(),
+                cwd: session.cwd.clone(),
+                client_app: session.client_app.clone(),
+                process_id: session.process_id,
             })
             .collect();
         snapshots.sort_by(|left, right| {
@@ -153,9 +183,21 @@ impl SessionManager {
             last_event_at: received_at,
             source_timestamp: None,
             completed_at: None,
+            cwd: None,
+            client_app: None,
+            process_id: None,
         });
         if event.project.is_some() {
             session.project = event.project;
+        }
+        if event.cwd.is_some() {
+            session.cwd = event.cwd;
+        }
+        if event.client_app.is_some() {
+            session.client_app = event.client_app;
+        }
+        if event.process_id.is_some() {
+            session.process_id = event.process_id;
         }
         session.state = state;
         session.last_event_at = received_at;
@@ -262,7 +304,55 @@ mod tests {
             project: None,
             kind,
             occurred_at: occurred_at.map(str::to_string),
+            cwd: None,
+            client_app: None,
+            process_id: None,
         }
+    }
+
+    #[test]
+    fn focus_target_prefers_the_most_urgent_session_and_keeps_metadata() {
+        let now = Instant::now();
+        let mut sessions = SessionManager::default();
+        sessions
+            .apply(
+                SessionEvent {
+                    event_id: "work".to_string(),
+                    agent: "codex".to_string(),
+                    session_id: "working".to_string(),
+                    project: Some("agent-light".to_string()),
+                    kind: EventKind::AgentWorking,
+                    occurred_at: None,
+                    cwd: Some("/projects/agent-light".to_string()),
+                    client_app: Some("vscode".to_string()),
+                    process_id: Some(4242),
+                },
+                now,
+            )
+            .unwrap();
+        sessions
+            .apply(
+                event("wait", "waiting", EventKind::PermissionRequired, None),
+                now,
+            )
+            .unwrap();
+
+        let target = sessions.focus_target("codex").unwrap();
+        assert_eq!(target.session_id, "waiting");
+        assert_eq!(target.state, DisplayState::Waiting);
+        assert!(sessions.focus_target("claude").is_none());
+
+        let metadata_session = sessions
+            .snapshots(now)
+            .into_iter()
+            .find(|snapshot| snapshot.session_id == "working")
+            .unwrap();
+        assert_eq!(
+            metadata_session.cwd.as_deref(),
+            Some("/projects/agent-light")
+        );
+        assert_eq!(metadata_session.client_app.as_deref(), Some("vscode"));
+        assert_eq!(metadata_session.process_id, Some(4242));
     }
 
     #[test]
@@ -409,5 +499,36 @@ mod tests {
             sessions.tick(now + Duration::from_secs(601)),
             DisplayState::Idle
         );
+    }
+}
+
+/// Everything needed to bring an agent's host window to the foreground.
+#[derive(Clone, Debug, Serialize)]
+pub struct FocusTarget {
+    pub agent: String,
+    pub session_id: String,
+    pub project: Option<String>,
+    pub cwd: Option<String>,
+    pub client_app: Option<String>,
+    pub process_id: Option<u32>,
+    pub state: DisplayState,
+}
+
+impl SessionManager {
+    /// Pick the most urgent session for an agent to focus.
+    pub fn focus_target(&self, agent: &str) -> Option<FocusTarget> {
+        self.sessions
+            .iter()
+            .filter(|(key, _)| key.agent.eq_ignore_ascii_case(agent))
+            .max_by_key(|(_, session)| priority(session.state))
+            .map(|(key, session)| FocusTarget {
+                agent: key.agent.clone(),
+                session_id: key.session_id.clone(),
+                project: session.project.clone(),
+                cwd: session.cwd.clone(),
+                client_app: session.client_app.clone(),
+                process_id: session.process_id,
+                state: session.state,
+            })
     }
 }
