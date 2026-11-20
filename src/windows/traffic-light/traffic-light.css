@@ -11,6 +11,10 @@
   cursor: grabbing;
 }
 
+.traffic-light-stage[data-focusable="true"] {
+  cursor: pointer;
+}
+
 .traffic-light-housing {
   display: grid;
   width: 82px;

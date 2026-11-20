@@ -3,12 +3,29 @@ use std::thread;
 use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Emitter, Manager};
 use uuid::Uuid;
 
 use crate::core::session::{EventKind, SessionEvent};
-use crate::core::{AppState, DisplaySnapshot};
+use crate::core::{AppState, DisplaySnapshot, DisplayState};
 use crate::outputs::publish_display_state;
+
+pub const AGENT_ALERT_EVENT: &str = "agent-alert";
+
+#[derive(Clone, Copy, Debug, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum AgentAlertKind {
+    Attention,
+    Completion,
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct AgentAlert {
+    pub kind: AgentAlertKind,
+    pub agent: String,
+    pub project: Option<String>,
+    pub state: DisplayState,
+}
 
 pub const EVENT_PORT: u16 = 38_527;
 const SCHEMA_VERSION: u8 = 1;
@@ -24,6 +41,12 @@ pub struct AgentEvent {
     #[serde(rename = "event")]
     pub kind: CodexEventKind,
     pub occurred_at: Option<String>,
+    #[serde(default)]
+    pub cwd: Option<String>,
+    #[serde(default)]
+    pub client_app: Option<String>,
+    #[serde(default)]
+    pub process_id: Option<u32>,
 }
 
 #[derive(Debug, Serialize)]
@@ -69,26 +92,68 @@ pub fn initialize_bridge(app: &AppHandle) -> Result<BridgeConfig, String> {
 pub fn apply_event(app: &AppHandle, event: AgentEvent) -> Result<(), String> {
     validate(&event)?;
     let app_state = app.state::<AppState>();
-    let applied = app_state
-        .sessions
-        .lock()
-        .map_err(|_| "session state lock is unavailable".to_string())?
-        .apply(
+    let (applied, alert) = {
+        let mut sessions = app_state
+            .sessions
+            .lock()
+            .map_err(|_| "session state lock is unavailable".to_string())?;
+        let previous = sessions.state_for_session(&event.agent, &event.session_id);
+        let applied = sessions.apply(
             SessionEvent {
                 event_id: event.event_id,
-                agent: event.agent,
-                session_id: event.session_id,
-                project: event.project,
+                agent: event.agent.clone(),
+                session_id: event.session_id.clone(),
+                project: event.project.clone(),
                 kind: event.kind,
                 occurred_at: event.occurred_at,
+                cwd: event.cwd.clone(),
+                client_app: event.client_app.clone(),
+                process_id: event.process_id,
             },
             std::time::Instant::now(),
         )?;
+        let current = sessions.state_for_session(&event.agent, &event.session_id);
+        let alert = if applied {
+            current
+                .and_then(|state| alert_kind_for_transition(previous, state))
+                .map(|kind| AgentAlert {
+                    kind,
+                    agent: event.agent.clone(),
+                    project: event
+                        .project
+                        .clone()
+                        .or_else(|| sessions.project_for_session(&event.agent, &event.session_id)),
+                    state: current.unwrap_or(DisplayState::Idle),
+                })
+        } else {
+            None
+        };
+        (applied, alert)
+    };
 
+    if let Some(alert) = alert {
+        if let Err(error) = app.emit(AGENT_ALERT_EVENT, alert) {
+            eprintln!("AgentLight could not broadcast an agent alert: {error}");
+        }
+    }
     if applied {
         refresh_display_state(app, true)?;
     }
     Ok(())
+}
+
+fn alert_kind_for_transition(
+    previous: Option<DisplayState>,
+    state: DisplayState,
+) -> Option<AgentAlertKind> {
+    if previous == Some(state) {
+        return None;
+    }
+    match state {
+        DisplayState::Waiting | DisplayState::Error => Some(AgentAlertKind::Attention),
+        DisplayState::Completed => Some(AgentAlertKind::Completion),
+        DisplayState::Working | DisplayState::Idle => None,
+    }
 }
 
 pub fn start_session_maintenance(app: AppHandle) {
@@ -153,6 +218,14 @@ fn validate(event: &AgentEvent) -> Result<(), String> {
             .occurred_at
             .as_ref()
             .is_some_and(|occurred_at| occurred_at.len() > 64)
+        || event
+            .cwd
+            .as_ref()
+            .is_some_and(|cwd| cwd.is_empty() || cwd.len() > 1024)
+        || event
+            .client_app
+            .as_ref()
+            .is_some_and(|client_app| client_app.is_empty() || client_app.len() > 64)
     {
         return Err("invalid AgentLight event".to_string());
     }
@@ -173,7 +246,58 @@ mod tests {
             project: Some("agent-light".to_string()),
             kind,
             occurred_at: None,
+            cwd: None,
+            client_app: None,
+            process_id: None,
         }
+    }
+
+    #[test]
+    fn alerts_only_when_entering_attention_or_completion_states() {
+        use super::{alert_kind_for_transition, AgentAlertKind};
+        use crate::core::DisplayState;
+
+        assert!(matches!(
+            alert_kind_for_transition(None, DisplayState::Waiting),
+            Some(AgentAlertKind::Attention)
+        ));
+        assert!(matches!(
+            alert_kind_for_transition(Some(DisplayState::Working), DisplayState::Error),
+            Some(AgentAlertKind::Attention)
+        ));
+        assert!(matches!(
+            alert_kind_for_transition(Some(DisplayState::Working), DisplayState::Completed),
+            Some(AgentAlertKind::Completion)
+        ));
+        assert!(
+            alert_kind_for_transition(Some(DisplayState::Waiting), DisplayState::Waiting).is_none()
+        );
+        assert!(alert_kind_for_transition(None, DisplayState::Working).is_none());
+        assert!(alert_kind_for_transition(None, DisplayState::Idle).is_none());
+    }
+
+    #[test]
+    fn accepts_focus_metadata_and_rejects_oversized_values() {
+        let payload = serde_json::json!({
+            "schema_version": 1,
+            "event_id": "event-1",
+            "agent": "claude",
+            "session_id": "session-1",
+            "project": "agent-light",
+            "event": "permission_required",
+            "cwd": "/projects/agent-light",
+            "client_app": "vscode",
+            "process_id": 4242
+        });
+        let event: AgentEvent = serde_json::from_value(payload).unwrap();
+        assert_eq!(event.cwd.as_deref(), Some("/projects/agent-light"));
+        assert_eq!(event.client_app.as_deref(), Some("vscode"));
+        assert_eq!(event.process_id, Some(4242));
+        assert!(super::validate(&event).is_ok());
+
+        let mut oversized = event;
+        oversized.cwd = Some("x".repeat(2048));
+        assert!(super::validate(&oversized).is_err());
     }
 
     #[test]

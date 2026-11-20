@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { spawn } from "node:child_process";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
+import { fileURLToPath } from "node:url";
 import { getAgentHookCommand, installHooks, isHooksInstalled, uninstallHooks } from "./hooks-lib.mjs";
 import { normalizeHookInputForTest } from "./hook.mjs";
 
@@ -71,4 +73,13 @@ test("installs and uninstalls a global-style Cursor config idempotently", () => 
     rmSync(root, { recursive: true, force: true });
     rmSync(home, { recursive: true, force: true });
   }
+});
+
+test("uninstall.mjs CLI executes successfully for supported agents", async () => {
+  const child = spawn(process.execPath, [fileURLToPath(new URL("./uninstall.mjs", import.meta.url)), "cursor"], {
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  const exited = new Promise((resolve) => child.once("close", resolve));
+  const code = await exited;
+  assert.equal(code, 0);
 });

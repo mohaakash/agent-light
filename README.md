@@ -22,9 +22,13 @@ AgentLight turns agent lifecycle events into a glanceable light: **yellow** whil
 ## What it does
 
 - Tracks sessions across Codex, Claude Code, Cursor, Gemini CLI, Windsurf, GitHub Copilot CLI, and Antigravity.
-- Shows a draggable, always-on-top widget for each agent.
+- Shows a draggable, always-on-top widget for each agent. The classic traffic light remains the default; animated Taby face widgets are optional.
 - Can mirror status to ESP8266, ESP32, Raspberry Pi Pico, or Arduino hardware.
 - Keeps events on your machine and sends status metadata only.
+
+### Animated face artwork attribution
+
+Optional animated face widgets use selected animations from the [Taby firmware asset pack](https://github.com/TRIIIS-LABS/firmware-taby), copyright TRIIIS LABS and contributors. The source pack and its animation IDs are preserved in `public/assets/taby/`; see [`public/assets/taby/LICENSE`](public/assets/taby/LICENSE) for the artwork terms. The face remains identified as Taby and does not replace or rebrand the classic AgentLight traffic light.
 
 ## Get started
 

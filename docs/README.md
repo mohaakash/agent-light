@@ -25,6 +25,7 @@ The desktop application must remain useful without the physical hardware.
 | `ROADMAP.md` | Phased MVP and release plan with acceptance criteria |
 | `CODEX_GUIDE.md` | Instructions for AI coding agents working in this repository |
 | `DECISIONS.md` | Architectural decisions and open questions |
+| `FUTURE_OPPORTUNITIES.md` | Detailed design specs for upcoming features and architectural enhancements |
 
 ## Product principles
 
